@@ -328,20 +328,9 @@ function drawCrosshair() {
 
 // ===== 标题页 =====
 function updateTitle() {
-  const t = Game.titleState || (Game.titleState = { editing: false, buffer: Game.seedText || newSeedText() });
-  if (!Game.seedText) Game.seedText = t.buffer;
-
-  if (t.editing) {
-    for (const k of Array.from(Input.pressed)) {
-      if (k === 'Enter') { t.editing = false; Input.pressed.delete(k); }
-      else if (k === 'Backspace') { t.buffer = t.buffer.slice(0, -1); Input.pressed.delete(k); }
-      else if (k === 'Escape') { t.editing = false; Input.pressed.delete(k); }
-      else if (k.length === 1 && /[a-zA-Z0-9_-]/.test(k)) {
-        if (t.buffer.length < 32) t.buffer += k;
-        Input.pressed.delete(k);
-      }
-    }
-    Game.seedText = t.buffer;
+  if (LeaderboardPanel.open) {
+    LeaderboardPanel.update();
+    return;
   }
 
   for (let i = 0; i < 3; i++) {
@@ -361,17 +350,15 @@ function updateTitle() {
           Game.mode = r.data;
         }
       }
-      else if (r.name === 'seed') { t.editing = true; }
-      else if (r.name === 'seed_random') { t.buffer = newSeedText(); Game.seedText = t.buffer; t.editing = false; }
+      else if (r.name === 'leaderboard') { LeaderboardPanel.show(); }
       else if (r.name === 'start') { startRun(); }
       else if (r.name === 'mute') { toggleMute(); }
     }
   }
-  if (Input.consumePress('Enter') && !t.editing) startRun();
+  if (Input.consumePress('Enter')) startRun();
 }
 
 function drawTitle() {
-  const t = Game.titleState;
   ctx.save();
   ctx.globalAlpha = 0.9;
   drawText('余热突围', 640, 96, 64, C.CYAN_LIGHT, 'center', 'bold');
@@ -406,14 +393,9 @@ function drawTitle() {
   drawButton('mode', '困难', 640 + 12, 448, modeW, modeH,
     { data: 'hard', size: 17, selected: Game.mode === 'hard', disabled: hardLocked, sub: hardLocked ? '通关后解锁' : '' });
 
-  drawText('种子', 640, 522, 16, C.TEXT_MUTED, 'center');
-  const seedW = 360;
-  const sx = 640 - seedW / 2 - 60;
-  const editing = t && t.editing;
-  drawPanel(sx, 536, seedW, 42, { cut: 8, stroke: editing ? C.PERFECT : C.CYAN, fill: 'rgba(8,16,24,0.85)' });
-  drawMono((Game.seedText || '') + (editing && Math.floor(Date.now() / 400) % 2 ? '|' : ''), sx + 14, 557, 15, C.TEXT);
-  registerRect('seed', sx, 536, seedW, 42);
-  drawButton('seed_random', '随机', sx + seedW + 14, 536, 100, 42, { size: 15 });
+  drawText('游戏名称', 640, 514, 16, C.TEXT_MUTED, 'center');
+  if (typeof ProfileInput !== 'undefined') ProfileInput.syncLayout();
+  drawButton('leaderboard', '排行榜', 778, 536, 112, 42, { size: 15 });
 
   drawButton('start', '开始游戏', 640 - 150, 602, 300, 58, { size: 24 });
 
@@ -525,7 +507,6 @@ function drawPause() {
   drawButton('totitle', '返回标题', 500, 380, 280, 54, { size: 20 });
   drawButton('mute', Sfx.muted ? '静音：开' : '静音：关', 500, 450, 280, 54, { size: 18 });
   drawButton('shake', Storage.data.shake ? '屏幕震动：开' : '屏幕震动：关', 500, 514, 280, 44, { size: 16 });
-  drawText('当前种子：' + Game.seedText, 640, 582, 14, C.TEXT_MUTED, 'center');
   drawText('按 Esc 继续', 640, 606, 13, C.TEXT_MUTED, 'center');
 }
 
@@ -560,7 +541,6 @@ function drawResult() {
   line('命中率', res.accuracy.toFixed(1) + '%');
   line('完美泄压', String(res.perfectVents));
   line('过热次数', String(res.overheatCount));
-  line('种子', res.seed);
   if (Game.newRecordFlags.best) drawText('新纪录！', 640, y, 18, C.PERFECT, 'center', 'bold');
   y += 28;
   drawText('本局升级', 330, y, 15, C.TEXT_MUTED);

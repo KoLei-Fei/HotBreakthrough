@@ -53,6 +53,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     fs.writeFileSync('D:/ClaudeWork/HotBreakthrough/preview/screenshot_title.png', Buffer.from(r0.data, 'base64'));
     console.log('saved title');
 
+    // 排行榜面板（示例数据，仅用于预览）
+    await ev('__afterheatDebug.mockLeaderboard()');
+    await ev('__afterheatDebug.step(0)');
+    r0 = await send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('D:/ClaudeWork/HotBreakthrough/preview/screenshot_leaderboard.png', Buffer.from(r0.data, 'base64'));
+    console.log('saved leaderboard');
+    await ev('__afterheatDebug.closeLeaderboard()');
+    await ev('__afterheatDebug.step(0)');
+
     // 游玩画面：瞄准最近的敌人开火
     await ev("__afterheatDebug.start('pulse')");
     await ev('__afterheatDebug.step(70)');

@@ -17,3 +17,7 @@ Thumbs.db
 
 # Raw boss generation files
 assets/game/_boss_raw/
+
+# Netlify
+node_modules/
+.netlify/

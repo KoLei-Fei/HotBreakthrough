@@ -7,6 +7,8 @@ const Input = {
   anyPress: false,
   init(canvas) {
     window.addEventListener('keydown', (e) => {
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
       if (!e.repeat) {

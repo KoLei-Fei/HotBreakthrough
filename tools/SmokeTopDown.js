@@ -93,7 +93,17 @@ async function shot(send, name) {
 
     await shot(c.send, '00_title');
 
+    // 排行榜面板可打开
+    await ev(c.send, '__afterheatDebug.openLeaderboard()');
+    await sleep(300);
+    await ev(c.send, '__afterheatDebug.step(1)');
+    results.leaderboard = await ev(c.send, '__afterheatDebug.leaderboardState()');
+    check('排行榜面板可打开', results.leaderboard.open === true, JSON.stringify(results.leaderboard));
+    await ev(c.send, '__afterheatDebug.closeLeaderboard()');
+    await ev(c.send, '__afterheatDebug.step(1)');
+
     // 拾取物：生命 +5 / 换枪 / 核弹清场
+    await ev(c.send, "__afterheatDebug.setPlayerName('玩家123')");
     await ev(c.send, "__afterheatDebug.start('pulse')");
     await ev(c.send, '__afterheatDebug.step(20)');
     await ev(c.send, '__afterheatDebug.Game.player.hp = 50');
@@ -101,6 +111,7 @@ async function shot(send, name) {
     await ev(c.send, '__afterheatDebug.step(24)');
     results.healthPickup = await ev(c.send, '__afterheatDebug.snapshot()');
     check('生命拾取 +5', results.healthPickup.hp === 55, 'hp=' + results.healthPickup.hp);
+    check('玩家名称进入本局', results.healthPickup.playerName === '玩家123', results.healthPickup.playerName);
     await ev(c.send, "__afterheatDebug.spawnPickupAt(-60, -10, 'weapon', 'swarm')");
     await ev(c.send, '__afterheatDebug.step(24)');
     results.weaponPickup = await ev(c.send, '__afterheatDebug.snapshot()');

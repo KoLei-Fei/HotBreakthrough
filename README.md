@@ -2,13 +2,14 @@
 
 俯视像素风 Roguelite 射击游戏。控制一只戴紫色护目镜的小兽，在沙漠、紫晶遗迹与绿洲前哨中迎战 6 波敌人和三阶段 Boss「熔炉执法者」。
 
-无需构建工具，浏览器直接打开 `index.html` 即可游玩。
+无需构建工具，浏览器直接打开 `index.html` 即可游玩；排行榜通过 Netlify Functions + Blobs 提供。
 
 ## 预览
 
 ![标题页](preview/screenshot_title.png)
 ![战斗画面](preview/screenshot_playing.png)
 ![Boss 登场](preview/screenshot_boss_intro.png)
+![排行榜](preview/screenshot_leaderboard.png)
 ![怪物潮](preview/screenshot_horde.png)
 
 ## 操作
@@ -16,6 +17,7 @@
 | 输入 | 行为 |
 |---|---|
 | WASD | 八方向移动 |
+| 标题页输入框 | 输入游戏名称（最多 15 字，中文/英文/数字） |
 | 鼠标移动 | 人物朝向 / 瞄准 |
 | 鼠标左键 | 射击 |
 | Q | 武器大招（能量满 100 时） |
@@ -37,13 +39,16 @@
 - 怪物潮：限时高密度刷怪，结束掉落宝箱
 - Boss「熔炉执法者」：3200 HP + 800 装甲、装甲破坏硬直、处决窗口、震撼登场
 - 暴击顿帧、伤害数字分级、击杀播报、低血量/怪物潮/Boss 登场屏幕边缘反馈
-- 本地纪录、困难模式、种子复现、暂停、静音
+- 游戏名称显示在人物头顶；种子 ID 内部随机生成并隐藏
+- 排行榜：记录名称、开始/结束时间、最后关卡、种子、评分；评分按关卡 > 用时 > 剩余血量计算
+- 排行榜仅展示前 10 名，数据存 Netlify Blobs
+- 困难模式、种子复现、暂停、静音
 
 ## 运行
 
-直接双击 `index.html`，使用 Chrome / Edge 打开即可。
+直接双击 `index.html`，使用 Chrome / Edge 打开即可（此时排行榜不可用，需通过 Netlify 访问）。
 
-如浏览器限制本地文件加载，也可以启动本地 HTTP 服务：
+本地调试也可以启动 HTTP 服务：
 
 ```bash
 python -m http.server 8000
@@ -68,9 +73,17 @@ js/
   loot.js           掉落物、事件点、怪物潮
   boss.js           Boss 登场/阶段/装甲/处决
   systems.js        波次、升级、结算、状态迁移
-  render.js         世界绘制、特效、准星
+  render.js         世界绘制、特效、准星、头顶名称
+  profile.js        名称输入（DOM input / IME / 字符过滤）
+  leaderboard-client.js  排行榜 HTTP 客户端（唯一 fetch 入口）
+  leaderboard-panel.js   排行榜前 10 面板
   ui.js             HUD、标题、升级、暂停、结算
   main.js           初始化、主循环、调试接口
+netlify/
+  functions/records.js   GET/POST /api/records
+  lib/rating.js          服务端评分/校验
+netlify.toml          Netlify 部署与 /api/records 重定向
+package.json          @netlify/blobs 依赖
 assets/
   game/             运行素材（高清精灵、地面、音效）
   ui/               武器/升级图标
@@ -78,6 +91,18 @@ assets/
 preview/            交付截图
 tools/              测试与素材处理脚本
 ```
+
+## Netlify 部署
+
+1. 在 Netlify 连接 GitHub 仓库 `KoLei-Fei/HotBreakthrough`
+2. Build command 留空
+3. Publish directory 填 `.`
+4. Functions directory 使用 `netlify/functions`
+5. 部署后访问 Netlify 给出的站点域名
+
+排行榜接口：`GET/POST /api/records`，记录保存在 Netlify Blobs，不使用本地电脑存储。
+
+> Netlify 在中国大陆的访问质量不稳定，正式对外前需用目标网络实测。
 
 ## 测试
 

@@ -86,6 +86,7 @@ function applyUpgrade(id) {
 function finalizeRun(win) {
   const d = Storage.data;
   Game.timeStop = Game.time;
+  Game.runEndAt = Date.now();
   if (Game.mode === 'hard') {
     Game.score = Math.round(Game.score * CONFIG.hardMode.scoreMul);
   }
@@ -102,7 +103,10 @@ function finalizeRun(win) {
     overheatCount: Game.overheatCount,
     score: Game.score,
     upgrades: Object.keys(Game.upgrades).filter((k) => Game.upgrades[k] > 0).map((k) => ({ id: k, level: Game.upgrades[k] })),
-    seed: Game.seedText
+    seed: Game.seedText,
+    playerName: Game.playerName,
+    startTime: LeaderboardClient.formatDateTime(Game.runStartAt || Date.now()),
+    endTime: LeaderboardClient.formatDateTime(Game.runEndAt)
   };
   Game.newRecordFlags = {};
   if (win) {
@@ -125,6 +129,29 @@ function finalizeRun(win) {
     }
   }
   Storage.save();
+
+  // 上报本局记录（失败时由 LeaderboardClient 放入本地待提交队列）
+  const p = Game.player;
+  let lastStage, winFlag = !!win;
+  if (win) {
+    lastStage = 8;
+  } else if (Game.wavePhase === 'boss') {
+    lastStage = 7;
+  } else {
+    lastStage = Math.max(1, Math.min(6, Game.wave));
+  }
+  const record = {
+    name: Game.playerName || '匿名玩家',
+    startTime: LeaderboardClient.formatDateTime(Game.runStartAt || Game.runEndAt),
+    endTime: LeaderboardClient.formatDateTime(Game.runEndAt),
+    seed: Game.seedText,
+    win: winFlag,
+    lastStage,
+    duration: Math.round(Game.time),
+    remainingHp: p ? Math.max(0, Math.round(p.hp)) : 0,
+    maxHp: CONFIG.player.maxHp
+  };
+  if (typeof LeaderboardClient !== 'undefined') LeaderboardClient.submitRun(record);
 }
 
 // ===== 状态迁移与主更新 =====

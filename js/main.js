@@ -9,7 +9,10 @@ function resize() {
   canvas.style.width = Math.floor(W * scale) + 'px';
   canvas.style.height = Math.floor(H * scale) + 'px';
 }
-window.addEventListener('resize', resize);
+window.addEventListener('resize', () => {
+  resize();
+  if (typeof ProfileInput !== 'undefined') ProfileInput.syncLayout();
+});
 
 // ===== 渲染主循环 =====
 function render() {
@@ -51,6 +54,7 @@ function render() {
   else if (Game.state === 'PAUSED') drawPause();
   else if (Game.state === 'VICTORY' || Game.state === 'DEFEAT') drawResult();
 
+  if (Game.state === 'TITLE' && LeaderboardPanel.open) LeaderboardPanel.draw();
   if (Game.bossIntroTimer > 0) drawBossIntro();
   drawCrosshair();
 }
@@ -98,6 +102,11 @@ function resetRunState() {
 function startRun() {
   Sfx.ensure();
   resetRunState();
+  Game.playerName = (typeof ProfileInput !== 'undefined') ? ProfileInput.getName() : '匿名玩家';
+  Game.seedText = newSeedText();
+  Game.runStartAt = Date.now();
+  Game.runEndAt = 0;
+  if (typeof ProfileInput !== 'undefined') ProfileInput.hide();
   Game.player = createPlayer();
   snapCamera();
   seedRng(Game.seedText);
@@ -108,8 +117,10 @@ function startRun() {
 function gotoTitle() {
   resetRunState();
   Game.player = null;
+  Game.playerName = '匿名玩家';
   Game.state = 'TITLE';
-  Game.titleState = { editing: false, buffer: Game.seedText || newSeedText() };
+  if (typeof LeaderboardPanel !== 'undefined') LeaderboardPanel.open = false;
+  if (typeof ProfileInput !== 'undefined') ProfileInput.show();
 }
 
 // ===== 更新分派 =====
@@ -134,6 +145,8 @@ function update(dt) {
 
   if (Game.ui.banner && Game.ui.banner.timer > 0) Game.ui.banner.timer -= dt;
   if (Game.ui.hintTimer > 0) Game.ui.hintTimer -= dt;
+  const titleVisible = Game.state === 'TITLE' && !(typeof LeaderboardPanel !== 'undefined' && LeaderboardPanel.open);
+  if (typeof ProfileInput !== 'undefined') ProfileInput.setVisible(titleVisible);
 }
 
 // ===== 初始化 =====
@@ -143,8 +156,8 @@ Sfx.init();
 resize();
 Input.init(canvas);
 canvas.style.cursor = 'none';
+if (typeof ProfileInput !== 'undefined') { ProfileInput.init(); ProfileInput.show(); }
 seedRng(newSeedText());
-Game.titleState = { editing: false, buffer: Game.seedText };
 setMap(MAPS[0]);
 
 window.addEventListener('blur', () => {
@@ -181,15 +194,37 @@ window.__afterheatDebug = {
   start(weapon, mode) {
     if (weapon) Game.weaponId = weapon;
     if (mode) Game.mode = mode;
-    Game.seedText = Game.seedText || newSeedText();
     startRun();
   },
   gotoTitle: gotoTitle,
+  setPlayerName(name) { if (typeof ProfileInput !== 'undefined') ProfileInput.setValue(name); },
+  openLeaderboard() { LeaderboardPanel.show(); },
+  closeLeaderboard() { LeaderboardPanel.hide(); },
+  mockLeaderboard() {
+    LeaderboardPanel.open = true;
+    LeaderboardPanel.loading = false;
+    LeaderboardPanel.error = null;
+    LeaderboardPanel.records = [
+      { name: '玩家123', duration: 180, lastLevelLabel: '通关', rating: 833800 },
+      { name: '匿名玩家', duration: 220, lastLevelLabel: '通关', rating: 833000 },
+      { name: '测试者', duration: 240, lastLevelLabel: 'Boss', rating: 733600 },
+      { name: '玩家A1', duration: 260, lastLevelLabel: 'Boss', rating: 732000 },
+      { name: '沙漠猫', duration: 300, lastLevelLabel: '第6波', rating: 633000 },
+      { name: '玩家B2', duration: 320, lastLevelLabel: '第5波', rating: 533000 },
+      { name: '匿名玩家', duration: 360, lastLevelLabel: '第4波', rating: 433000 },
+      { name: '测试者', duration: 420, lastLevelLabel: '第3波', rating: 333000 },
+      { name: '玩家C3', duration: 500, lastLevelLabel: '第2波', rating: 233000 },
+      { name: '新手', duration: 600, lastLevelLabel: '第1波', rating: 133000 }
+    ];
+    if (typeof ProfileInput !== 'undefined') ProfileInput.hide();
+  },
+  leaderboardState() { return { open: LeaderboardPanel.open, loading: LeaderboardPanel.loading, error: LeaderboardPanel.error, count: LeaderboardPanel.records.length }; },
   snapshot() {
     return {
       state: Game.state,
       mode: Game.mode,
       weapon: Game.weaponId,
+      playerName: Game.playerName,
       wave: Game.wave,
       wavePhase: Game.wavePhase,
       enemies: Game.enemies.length,

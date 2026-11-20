@@ -19,9 +19,15 @@
 | `js/loot.js` | 掉落物、生命/换枪/核弹/精英宝箱、祭坛/商店事件、怪物潮 |
 | `js/boss.js` | Boss 登场/阶段/装甲/处决/伤害 |
 | `js/systems.js` | 波次、升级抽取、结算、主更新与状态迁移 |
-| `js/render.js` | 世界绘制、特效、拾取/事件、准星、Boss 入场/屏幕效果 |
+| `js/render.js` | 世界绘制、特效、拾取/事件、准星、Boss 入场/屏幕效果、头顶名称 |
+| `js/profile.js` | 名称输入 DOM、IME、字符过滤、本地记忆 |
+| `js/leaderboard-client.js` | 排行榜 HTTP 客户端；唯一 fetch 入口 |
+| `js/leaderboard-panel.js` | 标题页排行榜前 10 面板 |
 | `js/ui.js` | HUD、标题页、升级页、暂停/结算 |
-| `js/main.js` | canvas 初始化、主循环、开局/重置、更新分派、调试接口 |
+| `js/main.js` | canvas 初始化、主循环、开局/重置、开始/结束时间、更新分派、调试接口 |
+| `netlify/functions/records.js` | `GET/POST /api/records`，Netlify Blobs 存储 |
+| `netlify/lib/rating.js` | 服务端评分/字段校验（纯函数） |
+| `netlify.toml` / `package.json` | Netlify 静态发布、Functions、Blobs 依赖 |
 
 ## 修改原则
 
@@ -45,7 +51,7 @@
 
 ## 测试与素材
 
-- 回归测试：`node tools/SmokeTopDown.js`（19 项，含素材加载/拾取/大招/事件/怪物潮/相机/Boss 装甲与处决）。
+- 回归测试：`node tools/SmokeTopDown.js`（含素材加载/名称/排行榜面板/拾取/大招/事件/怪物潮/相机/Boss 装甲与处决）。
 - 预览截图：`node tools/CapturePreview.js`（输出到 `preview/`）。
 - 高清精灵：`assets/game/hr/`；地面：`assets/game/grounds/`；原始 AI 图：`assets/game/_raw/`。
 - 精灵处理：`python -I tools/ProcessSprite.py ...`；地面处理：`ProcessGround.py` / `ProcessGroundWorld.py`。

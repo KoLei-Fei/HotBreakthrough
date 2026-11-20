@@ -204,6 +204,24 @@ function drawPlayer() {
     ctx.fill();
   }
   ctx.restore();
+
+  // 玩家名称（跟随头顶）
+  const name = Game.playerName || '匿名玩家';
+  let fontSize = 13;
+  ctx.save();
+  ctx.font = 'bold ' + fontSize + 'px "Microsoft YaHei","PingFang SC",sans-serif';
+  if (ctx.measureText(name).width > 160) {
+    fontSize = 11;
+    ctx.font = 'bold ' + fontSize + 'px "Microsoft YaHei","PingFang SC",sans-serif';
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(4,8,12,0.9)';
+  ctx.strokeText(name, cx, p.y - 18);
+  ctx.fillStyle = C.TEXT;
+  ctx.fillText(name, cx, p.y - 18);
+  ctx.restore();
 }
 
 const ENEMY_SPRITE = { charger: 'charger', gunner: 'gunner', drone: 'drone', shield: 'shield', bomber: 'bomber' };
