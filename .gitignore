@@ -1,0 +1,19 @@
+# Local AI/tool state
+.claude/
+.workbuddy/
+
+# Old single-file backups
+index_monolith_backup.html
+index_neon_backup.html
+
+# Raw AI-generated source images (runtime assets are kept)
+assets/game/_raw/
+assets/ui/_raw/
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db
+
+# Raw boss generation files
+assets/game/_boss_raw/
