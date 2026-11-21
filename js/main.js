@@ -181,9 +181,10 @@ function frame(now) {
     update(FIXED_DT);
     accumulator -= FIXED_DT;
     steps += 1;
+    // 每个固定步进只消费一次按下事件；没有逻辑帧的渲染帧不能吞掉点击
+    Input.endFrame();
   }
   render();
-  Input.endFrame();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
