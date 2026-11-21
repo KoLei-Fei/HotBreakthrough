@@ -1,7 +1,7 @@
 // Netlify Function: GET /api/records, POST /api/records
 // 记录保存在 Netlify Blobs（云端），不写本地文件。
 const crypto = require('crypto');
-const { getStore } = require('@netlify/blobs');
+const { connectLambda, getStore } = require('@netlify/blobs');
 const { validate, compare } = require('../lib/rating');
 
 const STORE_NAME = 'afterheat-records';
@@ -43,6 +43,8 @@ function publicRecord(rec, rank) {
 
 exports.handler = async (event) => {
   try {
+    // Netlify Functions v1 需要从 event.blobs 注入 Blobs 上下文
+    if (event.blobs) connectLambda(event);
     const store = getStore(STORE_NAME);
     if (event.httpMethod === 'GET') {
       const records = await loadRecords(store);
@@ -77,6 +79,7 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: {}, body: '' };
     return json(405, { error: 'method not allowed' });
   } catch (e) {
-    return json(500, { error: 'storage unavailable' });
+    console.error('records function error:', e);
+    return json(500, { error: 'storage unavailable', detail: e.message });
   }
 };
