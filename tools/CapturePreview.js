@@ -48,10 +48,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     }
     await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
 
+    // 等待标题页关键图标加载
+    for (let i = 0; i < 40; i++) {
+      if ((await ev('__afterheatDebug.assetsState()'))?.criticalReady) break;
+      await sleep(200);
+    }
+
     // 标题页
     let r0 = await send('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('D:/ClaudeWork/HotBreakthrough/preview/screenshot_title.png', Buffer.from(r0.data, 'base64'));
     console.log('saved title');
+
+    // 预览前加载全部资源，避免截图出现回退图形
+    await ev('__afterheatDebug.preloadAll()');
+    for (let i = 0; i < 60; i++) {
+      const missing = await ev('__afterheatDebug.missingAssets()');
+      if (!missing.length) break;
+      await sleep(200);
+    }
 
     // 排行榜面板（示例数据，仅用于预览）
     await ev('__afterheatDebug.mockLeaderboard()');

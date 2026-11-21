@@ -151,7 +151,7 @@ function update(dt) {
 
 // ===== 初始化 =====
 Storage.load();
-Assets.load();
+Assets.loadCritical();
 Sfx.init();
 resize();
 Input.init(canvas);
@@ -197,6 +197,8 @@ window.__afterheatDebug = {
     startRun();
   },
   gotoTitle: gotoTitle,
+  preloadAll() { Assets.loadAll(); },
+  assetsState() { return { criticalReady: Assets.criticalReady, restStarted: Assets.restStarted, ready: Assets.ready, pending: Assets.pending }; },
   setPlayerName(name) { if (typeof ProfileInput !== 'undefined') ProfileInput.setValue(name); },
   openLeaderboard() { LeaderboardPanel.show(); },
   closeLeaderboard() { LeaderboardPanel.hide(); },

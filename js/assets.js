@@ -44,13 +44,10 @@ const SPRITE_FILES = {
   gunner_0: G + 'enemies/enemy_0004.png', gunner_1: G + 'enemies/enemy_0004.png', gunner_2: G + 'enemies/enemy_0004.png', gunner_3: G + 'enemies/enemy_0004.png',
   charger_0: G + 'enemies/enemy_0009.png', charger_1: G + 'enemies/enemy_0009.png', charger_2: G + 'enemies/enemy_0010.png', charger_3: G + 'enemies/enemy_0008.png',
   shield_0: G + 'enemies/enemy_0013.png', shield_1: G + 'enemies/enemy_0014.png', shield_2: G + 'enemies/enemy_0013.png', shield_3: G + 'enemies/enemy_0012.png',
-  // 高细节地面纹理：每套地图铺一张 1220×444 的完整地面图
-  ground_sand: G + 'grounds/sand_ground.png',
-  ground_purple: G + 'grounds/purple_ground.png',
-  ground_mint: G + 'grounds/mint_ground.png',
-  ground_sand_world: G + 'grounds/sand_world.png',
-  ground_purple_world: G + 'grounds/purple_world.png',
-  ground_mint_world: G + 'grounds/mint_world.png',
+  // 高细节地面纹理：每套地图一张 2440×888 WebP，按地图懒加载
+  ground_sand_world: G + 'grounds/sand_world.webp',
+  ground_purple_world: G + 'grounds/purple_world.webp',
+  ground_mint_world: G + 'grounds/mint_world.webp',
   // 地形（地面纯色瓦片保留作纹理缺失时的备用）
   sand: G + 'tiles/tile_0064.png', sand2: G + 'tiles/tile_0065.png',
   purple: G + 'tiles/tile_0109.png', purple2: G + 'tiles/tile_0019.png',
@@ -99,25 +96,27 @@ const SOUND_FILES = {
   alarm: 'error-b.ogg', hurt: 'hurt-c.ogg', victory: 'coin-d.ogg', defeat: 'lose-a.ogg'
 };
 
-// ===== 音效（Kenney .ogg） =====
+// ===== 音效（Kenney .ogg，首次播放时懒加载） =====
 const Sfx = {
   muted: false,
   clips: {},
+  urls: {},
   init() {
-    for (const name in SOUND_FILES) {
-      try {
-        const a = new Audio(G + 'sounds/' + SOUND_FILES[name]);
-        a.preload = 'auto';
-        this.clips[name] = a;
-      } catch (e) { /* 忽略 */ }
-    }
+    this.urls = {};
+    for (const name in SOUND_FILES) this.urls[name] = G + 'sounds/' + SOUND_FILES[name];
   },
-  ensure() { /* 浏览器在首次用户交互后允许播放，无需额外初始化 */ },
+  ensure() { /* 浏览器在首次用户交互后允许播放 */ },
   play(name) {
     if (this.muted) return;
-    const c = this.clips[name];
-    if (!c) return;
+    const url = this.urls[name];
+    if (!url) return;
     try {
+      let c = this.clips[name];
+      if (!c) {
+        c = new Audio(url);
+        c.preload = 'auto';
+        this.clips[name] = c;
+      }
       const n = c.cloneNode();
       n.volume = 0.35;
       const p = n.play();
@@ -127,28 +126,109 @@ const Sfx = {
 };
 
 // ===== 资源加载 =====
+// 标题页优先只加载 3 个武器图标；其余精灵延后，地面按地图懒加载。
+const CRITICAL_ASSETS = ['wicon_pulse', 'wicon_swarm', 'wicon_rail'];
+const GROUND_ASSETS = ['ground_sand_world', 'ground_purple_world', 'ground_mint_world'];
+
 const Assets = {
   images: {},
+  byUrl: {},
+  pending: 0,
   ready: false,
-  load() {
-    const all = Object.assign({}, SPRITE_FILES);
-    for (const k in UPGRADE_ICONS) all['upg_' + k] = UPGRADE_ICONS[k];
-    let pending = 0;
-    for (const key in all) {
-      const img = new Image();
-      pending++;
-      const done = () => { pending--; if (pending === 0) Assets.ready = true; };
-      img.onload = done;
-      img.onerror = done;
-      img.src = all[key];
-      this.images[key] = img;
+  criticalReady: false,
+  criticalStarted: false,
+  restStarted: false,
+
+  ensure(key, url, priority, onDone) {
+    if (this.images[key]) {
+      const img = this.images[key];
+      if (!onDone) return;
+      if (img.complete) onDone();
+      else if (img._ahDone) img._ahDone.push(onDone);
+      else img._ahDone = [onDone];
+      return;
     }
-    if (pending === 0) this.ready = true;
+    const shared = this.byUrl[url];
+    if (shared) {
+      this.images[key] = shared;
+      if (!onDone) return;
+      if (shared.complete) onDone();
+      else if (shared._ahDone) shared._ahDone.push(onDone);
+      else shared._ahDone = [onDone];
+      return;
+    }
+    const img = new Image();
+    img.decoding = 'async';
+    if ('fetchPriority' in img) img.fetchPriority = priority || 'auto';
+    img._ahDone = onDone ? [onDone] : [];
+    this.images[key] = img;
+    this.byUrl[url] = img;
+    this.pending++;
+    const done = () => {
+      this.pending--;
+      if (this.pending <= 0) this.ready = true;
+      const callbacks = img._ahDone || [];
+      img._ahDone = [];
+      for (const cb of callbacks) { try { cb(); } catch (e) { /* ignore */ } }
+    };
+    img.onload = done;
+    img.onerror = done;
+    img.src = url;
   },
+
+  loadCritical() {
+    if (this.criticalStarted) return;
+    this.criticalStarted = true;
+    let left = CRITICAL_ASSETS.length;
+    for (const key of CRITICAL_ASSETS) {
+      this.ensure(key, SPRITE_FILES[key], 'high', () => {
+        left -= 1;
+        if (left <= 0) {
+          this.criticalReady = true;
+          this.scheduleRest();
+        }
+      });
+    }
+    if (left <= 0) { this.criticalReady = true; this.scheduleRest(); }
+  },
+
+  scheduleRest() {
+    if (this.restStarted) return;
+    const run = () => this.loadRest();
+    if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 1800 });
+    else setTimeout(run, 250);
+  },
+
+  loadRest() {
+    if (this.restStarted) return;
+    this.restStarted = true;
+    for (const key in SPRITE_FILES) {
+      if (CRITICAL_ASSETS.includes(key) || GROUND_ASSETS.includes(key)) continue;
+      this.ensure(key, SPRITE_FILES[key], 'low');
+    }
+    for (const id in UPGRADE_ICONS) {
+      this.ensure('upg_' + id, UPGRADE_ICONS[id], 'low');
+    }
+  },
+
+  loadGroundForMap(map) {
+    const key = map && map.groundTexWorld;
+    if (!key || !SPRITE_FILES[key]) return;
+    this.ensure(key, SPRITE_FILES[key], 'high');
+  },
+
+  // 测试/预览用：立即预加载全部素材
+  loadAll() {
+    this.loadCritical();
+    this.loadRest();
+    for (const key of GROUND_ASSETS) this.ensure(key, SPRITE_FILES[key], 'high');
+  },
+
   get(key) {
     const img = this.images[key];
     return (img && img.complete && img.naturalWidth > 0) ? img : null;
   },
+
   // 命中闪白：生成与精灵轮廓一致的白色剪影，避免整块白矩形
   whiteCache: {},
   white(key) {
@@ -165,10 +245,9 @@ const Assets = {
     g.fillRect(0, 0, c.width, c.height);
     this.whiteCache[key] = c;
     return c;
-  },
-  // 角色帧：dir 0下 1右 2上 3左
+    },
+    // 角色帧：dir 0下 1右 2上 3左
   frame(prefix, dir) {
     return this.get(prefix + '_' + dir) || this.get(prefix + '_0');
   }
 };
-

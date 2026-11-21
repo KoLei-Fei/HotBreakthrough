@@ -108,7 +108,10 @@
     "mint_ground.png",
     "sand_world.png",
     "purple_world.png",
-    "mint_world.png"
+    "mint_world.png",
+    "sand_world.webp",
+    "purple_world.webp",
+    "mint_world.webp"
   ],
   "sounds": [
     "coin-a.ogg",

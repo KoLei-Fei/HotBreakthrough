@@ -82,6 +82,7 @@ async function shot(send, name) {
     }
     await c.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
 
+    await ev(c.send, '__afterheatDebug.preloadAll()');
     let missingAssets = [];
     for (let i = 0; i < 60; i++) {
       missingAssets = await ev(c.send, '__afterheatDebug.missingAssets()');
