@@ -80,7 +80,10 @@ function pointHitsObstacle(x, y) {
 
 // 屏幕鼠标坐标 -> 世界坐标（考虑相机）
 function mouseWorldPosition() {
-  return { x: Input.mouse.x - VIEW.left + Game.cam.x, y: Input.mouse.y - VIEW.top + Game.cam.y };
+  return {
+    x: Game.cam.x + (Input.mouse.x - VIEW.left) / CAMERA_ZOOM,
+    y: Game.cam.y + (Input.mouse.y - VIEW.top) / CAMERA_ZOOM
+  };
 }
 
 function aimAngleFromPlayer(p) {

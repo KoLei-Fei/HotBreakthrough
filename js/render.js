@@ -55,22 +55,13 @@ function drawBackground(time) {
 
 function drawMap() {
   const map = Game.map || MAPS[0];
-  const gImg = Assets.get(map.ground) || Assets.get('sand');
-  const gImg2 = Assets.get(map.ground2) || Assets.get('sand2');
-  // 大世界地面纹理优先；缺失时回退到纯色瓦片平铺
-  const tex = (map.groundTexWorld && Assets.get(map.groundTexWorld)) ||
-              (map.groundTex && Assets.get(map.groundTex));
+  // 大世界地面纹理优先；缺失时使用纯色底，绝不平铺瓦片拼出网格
+  const tex = map.groundTexWorld ? Assets.get(map.groundTexWorld) : null;
   if (tex) {
     ctx.drawImage(tex, 0, 0, FIELD.right, FIELD.bottom);
   } else {
-    for (let y = FIELD.top; y < FIELD.bottom; y += TILE) {
-      for (let x = FIELD.left; x < FIELD.right; x += TILE) {
-        const alt = ((Math.floor(x / TILE) + Math.floor(y / TILE)) % 4 === 0);
-        const img = alt ? gImg2 : gImg;
-        if (img) ctx.drawImage(img, x, y, TILE, TILE);
-        else { ctx.fillStyle = C.SAND; ctx.fillRect(x, y, TILE, TILE); }
-      }
-    }
+    ctx.fillStyle = map.fallbackColor || C.SAND;
+    ctx.fillRect(0, 0, FIELD.right, FIELD.bottom);
   }
   const dim = map.groundDim || 0;
   if (dim > 0) {

@@ -261,7 +261,10 @@ window.__afterheatDebug = {
   },
   // 世界坐标 -> 屏幕坐标（测试瞄准用）
   screenPoint(x, y) {
-    return { x: x - Game.cam.x + VIEW.left, y: y - Game.cam.y + VIEW.top };
+    return {
+      x: VIEW.left + (x - Game.cam.x) * CAMERA_ZOOM,
+      y: VIEW.top + (y - Game.cam.y) * CAMERA_ZOOM
+    };
   },
   aimAt(x, y, down) {
     const s = this.screenPoint(x, y);

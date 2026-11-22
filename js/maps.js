@@ -9,7 +9,7 @@ const TILE = 48; // 16px 素材的整数 3 倍，关闭平滑后保持像素清�
 const MAPS = [
   {
     name: '沙漠营地',
-    ground: 'sand', ground2: 'sand2', groundTex: 'ground_sand', groundTexWorld: 'ground_sand_world', groundDim: 0.08, tint: null,
+    ground: 'sand', ground2: 'sand2', groundTex: 'ground_sand', groundTexWorld: 'ground_sand_world', groundDim: 0.08, tint: null, fallbackColor: '#e0a878',
     obstacles: [
       { tile: 'crate', x: 300, y: 300 }, { tile: 'crate', x: 356, y: 300 },
       { tile: 'crate', x: 880, y: 300 }, { tile: 'crate', x: 936, y: 300 },
@@ -31,7 +31,7 @@ const MAPS = [
   },
   {
     name: '紫晶遗迹',
-    ground: 'purple', ground2: 'purple2', groundTex: 'ground_purple', groundTexWorld: 'ground_purple_world', groundDim: 0.06, tint: null,
+    ground: 'purple', ground2: 'purple2', groundTex: 'ground_purple', groundTexWorld: 'ground_purple_world', groundDim: 0.06, tint: null, fallbackColor: '#8f7fa8',
     obstacles: [
       { tile: 'pillar', x: 260, y: 260 }, { tile: 'pillar', x: 260, y: 316 },
       { tile: 'pillar', x: 980, y: 260 }, { tile: 'pillar', x: 980, y: 316 },
@@ -52,7 +52,7 @@ const MAPS = [
   },
   {
     name: '绿洲前哨',
-    ground: 'grass', ground2: 'grass2', groundTex: 'ground_mint', groundTexWorld: 'ground_mint_world', groundDim: 0.08, tint: null,
+    ground: 'grass', ground2: 'grass2', groundTex: 'ground_mint', groundTexWorld: 'ground_mint_world', groundDim: 0.08, tint: null, fallbackColor: '#7fbfae',
     obstacles: [
       { tile: 'crate2', x: 340, y: 340 }, { tile: 'crate2', x: 396, y: 340 },
       { tile: 'crate', x: 830, y: 340 }, { tile: 'crate', x: 886, y: 340 },

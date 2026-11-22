@@ -3,6 +3,7 @@
 // ===== 基础常量与配置 =====
 const W = 1280, H = 720;
 const FIXED_DT = 1 / 60;
+const CAMERA_ZOOM = 1.35; // 世界内容放大倍数（不改变地图尺寸）
 const MAX_FRAME_DT = 0.05;
 
 const C = {
